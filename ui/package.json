@@ -1,0 +1,25 @@
+{
+  "name": "neo-quantum-ui",
+  "version": "1.0.0",
+  "description": "Three.js visualization for NEO Quantum analysis",
+  "author": "HxHippy <dev@hxhippy.com>",
+  "license": "AGPL-3.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/HxHippy/neo-quantum.git"
+  },
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "three": "^0.170.0"
+  },
+  "devDependencies": {
+    "@types/three": "^0.170.0",
+    "typescript": "^5.7.2",
+    "vite": "^6.0.6"
+  }
+}

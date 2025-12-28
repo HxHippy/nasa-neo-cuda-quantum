@@ -1,0 +1,871 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NEO Quantum | Near Earth Object Threat Visualization | HxHippy</title>
+  <meta name="description" content="Educational 3D visualization of Near Earth Objects with GPU-simulated quantum algorithms. Real NASA data with CUDA-Q quantum circuit demonstrations.">
+  <meta name="author" content="HxHippy">
+  <meta name="keywords" content="NEO, asteroids, space, visualization, quantum computing, threat analysis, NASA, Three.js">
+
+  <!-- Open Graph / Social -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="NEO Quantum - Near Earth Object Visualization">
+  <meta property="og:description" content="Educational 3D visualization of Near Earth Objects with GPU-simulated quantum algorithms. Real NASA data with CUDA-Q quantum circuit demonstrations.">
+  <meta property="og:url" content="https://github.com/HxHippy/neo-quantum">
+
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="NEO Quantum - Near Earth Object Visualization">
+  <meta name="twitter:description" content="Educational 3D visualization of Near Earth Objects with GPU-simulated quantum algorithms. Real NASA data, no false claims.">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="/images/brand/LTFI-Logo-White.svg">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: #000;
+      color: #fff;
+      overflow: hidden;
+    }
+
+    #app {
+      width: 100vw;
+      height: 100vh;
+      position: relative;
+    }
+
+    #canvas-container {
+      width: 100%;
+      height: 100%;
+    }
+
+    /* Header */
+    #header {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      padding: 20px 30px;
+      background: linear-gradient(to bottom, rgba(0,0,0,0.8) 0%, transparent 100%);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      pointer-events: none;
+      z-index: 100;
+    }
+
+    #header h1 {
+      font-size: 24px;
+      font-weight: 300;
+      letter-spacing: 2px;
+    }
+
+    #header h1 span {
+      color: #00ffff;
+    }
+
+    #header-brand {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    #header-tagline {
+      font-size: 11px;
+      color: #666;
+      letter-spacing: 0.5px;
+      font-weight: 400;
+    }
+
+    #status {
+      display: none;
+    }
+
+    /* Controls */
+    /* Drawer Toggle Button */
+    #drawer-toggle {
+      position: absolute;
+      top: 80px;
+      right: 20px;
+      width: 44px;
+      height: 44px;
+      background: rgba(0,0,0,0.8);
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 8px;
+      color: #fff;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 102;
+      transition: all 0.2s;
+    }
+
+    #drawer-toggle:hover {
+      background: rgba(0,255,255,0.2);
+      border-color: #00ffff;
+    }
+
+    #drawer-toggle svg {
+      width: 20px;
+      height: 20px;
+      transition: transform 0.3s ease;
+    }
+
+    #drawer-toggle.open svg {
+      transform: rotate(180deg);
+    }
+
+    /* Controls Drawer */
+    #controls-drawer {
+      position: absolute;
+      top: 0;
+      right: -280px;
+      width: 260px;
+      height: 100%;
+      background: rgba(0,0,0,0.95);
+      border-left: 1px solid rgba(255,255,255,0.1);
+      padding: 80px 20px 20px;
+      z-index: 101;
+      transition: right 0.3s ease;
+      overflow-y: auto;
+    }
+
+    #controls-drawer.open {
+      right: 0;
+    }
+
+    #controls-drawer h3 {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: #666;
+      margin: 20px 0 10px;
+      padding-bottom: 5px;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+
+    #controls-drawer h3:first-child {
+      margin-top: 0;
+    }
+
+    #controls {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .control-btn {
+      padding: 10px 16px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 6px;
+      color: #ccc;
+      cursor: pointer;
+      font-size: 13px;
+      text-align: left;
+      transition: all 0.2s;
+    }
+
+    .control-btn:hover {
+      background: rgba(255,255,255,0.1);
+      border-color: rgba(255,255,255,0.3);
+      color: #fff;
+    }
+
+    .control-btn.active {
+      background: rgba(0,255,255,0.15);
+      border-color: #00ffff;
+      color: #00ffff;
+    }
+
+    .mode-toggle {
+      display: flex;
+      gap: 0;
+      border-radius: 6px;
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,0.15);
+    }
+
+    .mode-btn {
+      flex: 1;
+      padding: 10px 12px;
+      background: rgba(255,255,255,0.05);
+      border: none;
+      color: #888;
+      cursor: pointer;
+      font-size: 12px;
+      transition: all 0.2s;
+    }
+
+    .mode-btn:first-child {
+      border-right: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .mode-btn:hover {
+      background: rgba(255,255,255,0.1);
+      color: #fff;
+    }
+
+    .mode-btn.active {
+      background: rgba(0,255,255,0.15);
+      color: #00ffff;
+    }
+
+    /* Playback Controls */
+    #playback-controls {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .playback-row {
+      display: flex;
+      gap: 4px;
+    }
+
+    .playback-btn {
+      flex: 1;
+      text-align: center;
+      padding: 10px 8px;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .playback-btn.play-pause {
+      flex: 2;
+    }
+
+    .playback-btn.play-pause.paused {
+      background: rgba(0,255,255,0.2);
+      border-color: #00ffff;
+      color: #00ffff;
+    }
+
+    .speed-display {
+      text-align: center;
+      font-size: 12px;
+      color: #888;
+      padding: 4px 0;
+    }
+
+    .speed-display span {
+      color: #00ffff;
+      font-weight: 600;
+    }
+
+    /* Info Panel */
+    #info-panel {
+      position: absolute;
+      bottom: 20px;
+      left: 20px;
+      width: 350px;
+      max-height: 400px;
+      background: rgba(0,0,0,0.85);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 8px;
+      padding: 20px;
+      pointer-events: auto;
+      z-index: 100;
+      overflow-y: auto;
+    }
+
+    #info-panel h2 {
+      font-size: 16px;
+      font-weight: 500;
+      margin-bottom: 15px;
+      color: #00ffff;
+    }
+
+    #info-panel .neo-name {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 10px;
+    }
+
+    #info-panel .stat {
+      display: flex;
+      justify-content: space-between;
+      padding: 5px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+
+    #info-panel .stat-label {
+      color: #888;
+    }
+
+    #info-panel .stat-value {
+      font-weight: 500;
+    }
+
+    .threat-badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .threat-NEGLIGIBLE { background: #0a0; color: #fff; }
+    .threat-LOW { background: #0aa; color: #fff; }
+    .threat-MODERATE { background: #aa0; color: #000; }
+    .threat-HIGH { background: #f60; color: #fff; }
+    .threat-CRITICAL { background: #f00; color: #fff; }
+
+    /* Toast Progress */
+    #progress {
+      position: absolute;
+      top: 80px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-20px);
+      background: rgba(0,0,0,0.9);
+      border: 1px solid rgba(0,255,255,0.3);
+      border-radius: 8px;
+      padding: 12px 20px;
+      z-index: 150;
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      max-width: 400px;
+    }
+
+    #progress.active {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+      pointer-events: auto;
+    }
+
+    #progress-spinner {
+      width: 18px;
+      height: 18px;
+      border: 2px solid rgba(0,255,255,0.2);
+      border-top-color: #00ffff;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    #progress-text {
+      font-size: 13px;
+      color: #ccc;
+      white-space: nowrap;
+    }
+
+    #progress-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 0 0 8px 8px;
+      overflow: hidden;
+    }
+
+    #progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #00ffff, #00ff88);
+      width: 0%;
+      transition: width 0.3s;
+    }
+
+    /* Legend */
+    #legend {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 20px;
+      background: rgba(0,0,0,0.7);
+      padding: 10px 20px;
+      border-radius: 20px;
+      z-index: 100;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+    }
+
+    .legend-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+
+    /* Loading */
+    #loading {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: #000;
+      z-index: 1000;
+    }
+
+    #loading.hidden {
+      display: none;
+    }
+
+    .spinner {
+      width: 50px;
+      height: 50px;
+      border: 3px solid rgba(0,255,255,0.2);
+      border-top-color: #00ffff;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    #loading p {
+      margin-top: 20px;
+      color: #888;
+    }
+
+    /* Info Panels (AI & About) */
+    #ai-panel,
+    #about-panel {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 600px;
+      max-height: 80vh;
+      background: rgba(0,0,0,0.95);
+      border: 1px solid #00ffff;
+      border-radius: 12px;
+      z-index: 200;
+      overflow: hidden;
+    }
+
+    #ai-panel.hidden,
+    #about-panel.hidden {
+      display: none;
+    }
+
+    #ai-panel-header,
+    #about-panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 15px 20px;
+      background: rgba(0,255,255,0.1);
+      border-bottom: 1px solid rgba(0,255,255,0.3);
+    }
+
+    #ai-panel-header h2,
+    #about-panel-header h2 {
+      margin: 0;
+      color: #00ffff;
+      font-size: 18px;
+    }
+
+    #ai-panel-close,
+    #about-panel-close {
+      background: none;
+      border: none;
+      color: #fff;
+      font-size: 20px;
+      cursor: pointer;
+      padding: 5px 10px;
+    }
+
+    #ai-content,
+    #about-content {
+      padding: 20px;
+      max-height: calc(80vh - 60px);
+      overflow-y: auto;
+      line-height: 1.6;
+    }
+
+    #ai-content h3,
+    #about-content h3 {
+      color: #00ffff;
+      margin: 15px 0 10px;
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    #ai-content p,
+    #about-content p {
+      margin: 10px 0;
+      color: #ccc;
+    }
+
+    #ai-content ul,
+    #about-content ul {
+      margin: 10px 0;
+      padding-left: 20px;
+    }
+
+    #ai-content li,
+    #about-content li {
+      margin: 5px 0;
+      color: #aaa;
+    }
+
+    .ai-loading {
+      text-align: center;
+      padding: 40px;
+      color: #888;
+    }
+
+    .ai-loading .spinner {
+      margin: 0 auto 20px;
+    }
+
+    .ai-summary {
+      background: rgba(0,255,255,0.1);
+      padding: 15px;
+      border-radius: 8px;
+      border-left: 3px solid #00ffff;
+      margin-bottom: 20px;
+    }
+
+    .ai-priority {
+      color: #ff6600 !important;
+    }
+
+    /* Branded Footer */
+    #footer-branding {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 40px;
+      padding: 12px 20px;
+      background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, transparent 100%);
+      z-index: 50;
+      pointer-events: auto;
+    }
+
+    .branding-link {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      text-decoration: none;
+      opacity: 0.6;
+      transition: opacity 0.2s ease;
+    }
+
+    .branding-link:hover {
+      opacity: 1;
+    }
+
+    .branding-label {
+      font-size: 9px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: #888;
+      font-weight: 600;
+    }
+
+    .branding-logo {
+      height: 20px;
+      width: auto;
+    }
+
+    /* GitHub link */
+    .github-link {
+      position: absolute;
+      top: 20px;
+      right: 80px;
+      z-index: 103;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 14px;
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 6px;
+      color: #888;
+      text-decoration: none;
+      font-size: 13px;
+      transition: all 0.2s ease;
+    }
+
+    .github-link:hover {
+      background: rgba(0,255,255,0.15);
+      border-color: #00ffff;
+      color: #00ffff;
+    }
+
+    .github-link svg {
+      width: 18px;
+      height: 18px;
+      fill: currentColor;
+    }
+
+    /* Adjust legend position for footer */
+    #legend {
+      bottom: 60px;
+    }
+
+    /* Filter controls */
+    .filter-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .filter-checkbox {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      background: rgba(255,255,255,0.05);
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 13px;
+      color: #ccc;
+      transition: all 0.2s;
+    }
+
+    .filter-checkbox:hover {
+      background: rgba(255,255,255,0.1);
+    }
+
+    .filter-checkbox input {
+      width: 16px;
+      height: 16px;
+      cursor: pointer;
+    }
+
+    .filter-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+
+    .filter-checkbox input:not(:checked) + .filter-dot {
+      opacity: 0.3;
+    }
+
+    /* NEO Dropdown */
+    .neo-select {
+      width: 100%;
+      padding: 10px 12px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 6px;
+      color: #fff;
+      font-size: 13px;
+      cursor: pointer;
+    }
+
+    .neo-select:hover {
+      border-color: rgba(255,255,255,0.3);
+    }
+
+    .neo-select:focus {
+      outline: none;
+      border-color: #00ffff;
+    }
+
+    .neo-select option {
+      background: #1a1a2e;
+      color: #fff;
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <div id="canvas-container"></div>
+
+    <div id="header">
+      <div id="header-brand">
+        <h1>NEO <span>QUANTUM</span></h1>
+        <span id="header-tagline">Near Earth Object Threat Visualization</span>
+      </div>
+      <div id="status">Connecting...</div>
+    </div>
+
+    <!-- Drawer Toggle -->
+    <button id="drawer-toggle" aria-label="Toggle controls">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M15 18l-6-6 6-6"/>
+      </svg>
+    </button>
+
+    <!-- Controls Drawer -->
+    <div id="controls-drawer">
+      <h3>View</h3>
+      <div id="controls">
+        <button class="control-btn active" id="btn-earth-view">Earth View</button>
+        <button class="control-btn" id="btn-solar-view">Solar System</button>
+      </div>
+
+      <h3>Playback</h3>
+      <div id="playback-controls">
+        <div class="playback-row">
+          <button class="control-btn playback-btn" id="btn-speed-down">-</button>
+          <button class="control-btn playback-btn play-pause" id="btn-play-pause">Pause</button>
+          <button class="control-btn playback-btn" id="btn-speed-up">+</button>
+        </div>
+        <div class="speed-display">Speed: <span id="speed-display">1x</span></div>
+        <button class="control-btn active" id="btn-hover-pause">Hover Pause</button>
+      </div>
+
+      <h3>Filter by Risk</h3>
+      <div id="filter-controls" class="filter-group">
+        <label class="filter-checkbox">
+          <input type="checkbox" id="filter-critical" checked>
+          <span class="filter-dot" style="background:#f00"></span>
+          Critical
+        </label>
+        <label class="filter-checkbox">
+          <input type="checkbox" id="filter-high" checked>
+          <span class="filter-dot" style="background:#f60"></span>
+          High
+        </label>
+        <label class="filter-checkbox">
+          <input type="checkbox" id="filter-moderate" checked>
+          <span class="filter-dot" style="background:#ff0"></span>
+          Moderate
+        </label>
+        <label class="filter-checkbox">
+          <input type="checkbox" id="filter-low" checked>
+          <span class="filter-dot" style="background:#0ff"></span>
+          Low
+        </label>
+        <label class="filter-checkbox">
+          <input type="checkbox" id="filter-negligible" checked>
+          <span class="filter-dot" style="background:#0f0"></span>
+          Negligible
+        </label>
+      </div>
+
+      <h3>Jump to NEO</h3>
+      <div id="neo-selector">
+        <select id="neo-dropdown" class="neo-select">
+          <option value="">Select an asteroid...</option>
+        </select>
+      </div>
+
+      <h3>Visual</h3>
+      <div id="controls">
+        <button class="control-btn active" id="btn-starfield">Starfield</button>
+        <button class="control-btn" id="btn-backdrop">NEO Backdrops</button>
+        <button class="control-btn" id="btn-reset-view">Reset View</button>
+      </div>
+
+      <h3>Analysis</h3>
+      <div id="controls">
+        <button class="control-btn" id="btn-analyze">Run Analysis</button>
+        <button class="control-btn" id="btn-ai-report">AI Fleet Report</button>
+      </div>
+
+      <h3>Display Mode</h3>
+      <div class="mode-toggle">
+        <button class="mode-btn active" id="btn-normal-mode">Normal</button>
+        <button class="mode-btn" id="btn-scientific-mode">Scientific</button>
+      </div>
+
+      <h3>Help</h3>
+      <div id="controls">
+        <button class="control-btn" id="btn-about">About This Project</button>
+      </div>
+    </div>
+
+    <!-- About Panel -->
+    <div id="about-panel" class="hidden">
+      <div id="about-panel-header">
+        <h2>About NEO Quantum</h2>
+        <button id="about-panel-close">x</button>
+      </div>
+      <div id="about-content"></div>
+    </div>
+
+    <!-- AI Analysis Panel -->
+    <div id="ai-panel" class="hidden">
+      <div id="ai-panel-header">
+        <h2>AI Analysis</h2>
+        <button id="ai-panel-close">x</button>
+      </div>
+      <div id="ai-content"></div>
+    </div>
+
+    <div id="info-panel">
+      <h2>Selected Object</h2>
+      <div id="neo-info">
+        <p style="color:#888">Click on an asteroid to view details</p>
+      </div>
+    </div>
+
+    <div id="progress">
+      <div id="progress-spinner"></div>
+      <div id="progress-text">Analyzing NEOs...</div>
+      <div id="progress-bar">
+        <div id="progress-fill"></div>
+      </div>
+    </div>
+
+    <div id="legend">
+      <!-- Populated dynamically based on display mode -->
+    </div>
+
+    <div id="loading">
+      <div class="spinner"></div>
+      <p>Initializing quantum visualization...</p>
+    </div>
+
+    <!-- GitHub Link -->
+    <a href="https://github.com/HxHippy/neo-quantum" target="_blank" rel="noopener noreferrer" class="github-link" aria-label="View source on GitHub">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
+      </svg>
+      <span>GitHub</span>
+    </a>
+
+    <!-- Branded Footer -->
+    <div id="footer-branding">
+      <a href="https://hxhippy.com" target="_blank" rel="noopener noreferrer" class="branding-link">
+        <span class="branding-label">Built By</span>
+        <img src="/images/brand/hxhippy-logo.png" alt="HxHippy" class="branding-logo">
+      </a>
+      <a href="https://kief.studio" target="_blank" rel="noopener noreferrer" class="branding-link">
+        <span class="branding-label">Company</span>
+        <img src="/images/brand/KS-FullLogo-LightSilver.svg" alt="Kief Studio" class="branding-logo">
+      </a>
+      <a href="https://ltfi.ai" target="_blank" rel="noopener noreferrer" class="branding-link">
+        <span class="branding-label">Powered By</span>
+        <img src="/images/brand/LTFI-Logo-White.svg" alt="LTFI" class="branding-logo">
+      </a>
+    </div>
+  </div>
+
+  <script type="module" src="/src/main.ts"></script>
+  <script>
+    // Drawer toggle
+    const drawerToggle = document.getElementById('drawer-toggle');
+    const controlsDrawer = document.getElementById('controls-drawer');
+
+    drawerToggle.addEventListener('click', () => {
+      drawerToggle.classList.toggle('open');
+      controlsDrawer.classList.toggle('open');
+    });
+  </script>
+</body>
+</html>

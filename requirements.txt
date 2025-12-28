@@ -1,0 +1,25 @@
+# NEO Quantum Dependencies
+
+# Web Framework
+fastapi>=0.104.0
+uvicorn[standard]>=0.24.0
+websockets>=12.0
+pydantic>=2.5.0
+
+# HTTP Client
+httpx>=0.25.0
+requests>=2.31.0
+
+# Environment & Config
+python-dotenv>=1.0.0
+
+# Scientific Computing
+numpy>=1.24.0
+scipy>=1.11.0
+
+# NVIDIA CUDA-Q (GPU quantum simulation)
+# Install separately: pip install cudaq
+# Requires CUDA toolkit and NVIDIA GPU drivers
+
+# Optional: AI Analysis
+# OpenRouter API client (uses httpx)
